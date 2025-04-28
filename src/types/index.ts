@@ -1,4 +1,3 @@
-
 export interface Space {
   id: string;
   name: string;
@@ -31,3 +30,4 @@ export interface FilterOptions {
   priceRange: [number, number];
   amenities: string[];
 }
+
