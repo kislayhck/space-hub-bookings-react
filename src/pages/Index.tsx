@@ -6,7 +6,6 @@ import { FeaturedSpaces } from "@/components/spaces/FeaturedSpaces";
 import { FeaturesSection } from "@/components/home/FeaturesSection";
 import { TestimonialsSection } from "@/components/home/TestimonialsSection";
 import { CTASection } from "@/components/home/CTASection";
-import { spaces } from "@/data/spaces";
 
 const Index = () => {
   return (
@@ -14,7 +13,7 @@ const Index = () => {
       <Navbar />
       <main className="flex-grow">
         <HeroSection />
-        <FeaturedSpaces spaces={spaces} />
+        <FeaturedSpaces />
         <FeaturesSection />
         <TestimonialsSection />
         <CTASection />
