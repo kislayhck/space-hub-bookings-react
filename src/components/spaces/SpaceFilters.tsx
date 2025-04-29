@@ -1,41 +1,35 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { cities, areas, amenities } from "@/data/spaces";
 import { FilterOptions } from "@/types";
 import { ChevronDown, ChevronUp, Filter } from "lucide-react";
 
 interface SpaceFiltersProps {
   filters: FilterOptions;
   onFilterChange: (filters: FilterOptions) => void;
+  availableAreas: string[];
+  availableAmenities: string[];
+  maxPrice: number;
 }
 
-export const SpaceFilters = ({ filters, onFilterChange }: SpaceFiltersProps) => {
+export const SpaceFilters = ({ 
+  filters, 
+  onFilterChange, 
+  availableAreas, 
+  availableAmenities,
+  maxPrice = 1000
+}: SpaceFiltersProps) => {
   const [expanded, setExpanded] = useState(false);
   const [priceRange, setPriceRange] = useState<[number, number]>(filters.priceRange);
-  const [selectedCity, setSelectedCity] = useState<string>(filters.city);
   const [selectedAreas, setSelectedAreas] = useState<string[]>(filters.area);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(filters.amenities);
 
   const handlePriceChange = (value: number[]) => {
     const newRange: [number, number] = [value[0], value[1]];
     setPriceRange(newRange);
-  };
-
-  const handleCityChange = (value: string) => {
-    setSelectedCity(value);
-    setSelectedAreas([]);
   };
 
   const handleAreaToggle = (area: string) => {
@@ -56,7 +50,7 @@ export const SpaceFilters = ({ filters, onFilterChange }: SpaceFiltersProps) => 
 
   const applyFilters = () => {
     onFilterChange({
-      city: selectedCity,
+      ...filters,
       area: selectedAreas,
       priceRange,
       amenities: selectedAmenities
@@ -64,17 +58,18 @@ export const SpaceFilters = ({ filters, onFilterChange }: SpaceFiltersProps) => 
   };
 
   const resetFilters = () => {
-    setSelectedCity("Pune");
+    const newFilters = {
+      ...filters,
+      area: [],
+      priceRange: [0, maxPrice],
+      amenities: []
+    };
+    
     setSelectedAreas([]);
-    setPriceRange([0, 1000]);
+    setPriceRange([0, maxPrice]);
     setSelectedAmenities([]);
     
-    onFilterChange({
-      city: "Pune",
-      area: [],
-      priceRange: [0, 1000],
-      amenities: []
-    });
+    onFilterChange(newFilters);
   };
 
   return (
@@ -108,30 +103,12 @@ export const SpaceFilters = ({ filters, onFilterChange }: SpaceFiltersProps) => 
         {/* Basic filters always visible */}
         <div className="space-y-3">
           <div>
-            <Label htmlFor="city">City</Label>
-            <Select
-              value={selectedCity}
-              onValueChange={handleCityChange}
-            >
-              <SelectTrigger id="city">
-                <SelectValue placeholder="Select city" />
-              </SelectTrigger>
-              <SelectContent>
-                {cities.map((city) => (
-                  <SelectItem key={city} value={city}>
-                    {city}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div>
             <Label htmlFor="price-range">Price Range (₹ per day)</Label>
             <div className="pt-4 pb-2">
               <Slider
-                defaultValue={[priceRange[0], priceRange[1]]}
-                max={1000}
+                value={[priceRange[0], priceRange[1]]}
+                min={0}
+                max={maxPrice}
                 step={50}
                 onValueChange={handlePriceChange}
                 className="my-4"
@@ -149,9 +126,9 @@ export const SpaceFilters = ({ filters, onFilterChange }: SpaceFiltersProps) => 
           <div className="space-y-4 pt-2 border-t">
             {/* Areas */}
             <div>
-              <Label className="mb-2 block">Areas in {selectedCity}</Label>
+              <Label className="mb-2 block">Areas</Label>
               <div className="grid grid-cols-2 gap-2">
-                {selectedCity && areas[selectedCity as keyof typeof areas]?.map((area) => (
+                {availableAreas.map((area) => (
                   <div key={area} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`area-${area}`}
@@ -172,8 +149,8 @@ export const SpaceFilters = ({ filters, onFilterChange }: SpaceFiltersProps) => 
             {/* Amenities */}
             <div>
               <Label className="mb-2 block">Amenities</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {amenities.slice(0, 10).map((amenity) => (
+              <div className="grid grid-cols-2 gap-2 max-h-60 overflow-y-auto">
+                {availableAmenities.map((amenity) => (
                   <div key={amenity} className="flex items-center space-x-2">
                     <Checkbox 
                       id={`amenity-${amenity}`}
