@@ -1,5 +1,4 @@
 
-import { useState } from "react";
 import { Space } from "@/types";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,7 +9,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { toast } from "@/components/ui/sonner";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,7 +21,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Pencil, Trash2 } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { useSpaces } from "@/hooks/useSpaces";
 
 interface SpacesListProps {
   spaces: Space[];
@@ -31,28 +29,10 @@ interface SpacesListProps {
 }
 
 export const SpacesList = ({ spaces, onEdit }: SpacesListProps) => {
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
+  const { deleteSpace } = useSpaces();
+  
   const handleDeleteSpace = async (id: string) => {
-    setIsDeleting(true);
-    try {
-      const { error } = await supabase.from("spaces").delete().eq("id", id);
-      
-      if (error) {
-        throw error;
-      }
-      
-      toast.success("Space deleted successfully");
-      setDeletingId(null);
-      // Ideally, we'd refetch the data here or update the state
-      // This example depends on the query invalidation from useSpaces to refresh the list
-    } catch (error) {
-      console.error("Error deleting space:", error);
-      toast.error("Failed to delete space");
-    } finally {
-      setIsDeleting(false);
-    }
+    deleteSpace.mutate(id);
   };
 
   return (
@@ -98,7 +78,6 @@ export const SpacesList = ({ spaces, onEdit }: SpacesListProps) => {
                           <Button
                             variant="destructive"
                             size="icon"
-                            onClick={() => setDeletingId(space.id)}
                           >
                             <Trash2 className="h-4 w-4" />
                           </Button>
@@ -116,9 +95,9 @@ export const SpacesList = ({ spaces, onEdit }: SpacesListProps) => {
                             <AlertDialogAction
                               className="bg-red-600 hover:bg-red-700"
                               onClick={() => handleDeleteSpace(space.id)}
-                              disabled={isDeleting}
+                              disabled={deleteSpace.isPending}
                             >
-                              {isDeleting && deletingId === space.id
+                              {deleteSpace.isPending
                                 ? "Deleting..."
                                 : "Delete"}
                             </AlertDialogAction>

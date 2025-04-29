@@ -1,7 +1,8 @@
 
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { Space } from '@/types';
+import { toast } from "sonner";
 
 export function useSpaces() {
   const queryClient = useQueryClient();
@@ -49,6 +50,28 @@ export function useSpaces() {
     retry: 2,
   });
 
+  // Mutation to delete a space
+  const deleteSpace = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('spaces')
+        .delete()
+        .eq('id', id);
+        
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => {
+      // Invalidate spaces query to refetch the updated list
+      queryClient.invalidateQueries({ queryKey: ['spaces'] });
+      toast.success("Space deleted successfully");
+    },
+    onError: (error) => {
+      console.error('Error deleting space:', error);
+      toast.error("Failed to delete space");
+    }
+  });
+
   // Function to invalidate the spaces query
   const invalidateSpaces = () => {
     queryClient.invalidateQueries({ queryKey: ['spaces'] });
@@ -56,6 +79,7 @@ export function useSpaces() {
 
   return {
     ...query,
+    deleteSpace,
     invalidateSpaces,
   };
 }
