@@ -31,3 +31,13 @@ export interface FilterOptions {
   priceRange: [number, number];
   amenities: string[];
 }
+
+export interface User {
+  email: string;
+  isAdmin: boolean;
+}
+
+export interface AuthState {
+  user: User | null;
+  loading: boolean;
+}

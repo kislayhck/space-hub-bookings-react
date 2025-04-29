@@ -10,7 +10,7 @@ import {
   NavigationMenuTrigger,
 } from "@/components/ui/navigation-menu";
 import { cn } from "@/lib/utils";
-import { Search, Menu } from "lucide-react";
+import { Search, Menu, UserCircle } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -21,9 +21,11 @@ import {
 } from "@/components/ui/sheet";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Input } from "@/components/ui/input";
+import { useAuth } from "@/contexts/AuthContext";
 
 const Navbar = () => {
   const isMobile = useIsMobile();
+  const { user, logout } = useAuth();
 
   return (
     <header className="bg-white border-b sticky top-0 z-50">
@@ -97,16 +99,39 @@ const Navbar = () => {
                   />
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 </div>
-                <Link to="/login">
-                  <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
-                    Log in
-                  </Button>
-                </Link>
-                <Link to="/signup">
-                  <Button className="bg-blue-600 text-white hover:bg-blue-700">
-                    Sign up
-                  </Button>
-                </Link>
+                
+                {user ? (
+                  <div className="flex items-center gap-2">
+                    {user.isAdmin && (
+                      <Link to="/admin">
+                        <Button variant="ghost" className="text-blue-600">
+                          Admin
+                        </Button>
+                      </Link>
+                    )}
+                    <Button 
+                      variant="outline" 
+                      className="flex items-center gap-2"
+                      onClick={() => logout()}
+                    >
+                      <UserCircle className="h-4 w-4" />
+                      Logout
+                    </Button>
+                  </div>
+                ) : (
+                  <>
+                    <Link to="/login">
+                      <Button variant="outline" className="text-blue-600 border-blue-600 hover:bg-blue-50">
+                        Log in
+                      </Button>
+                    </Link>
+                    <Link to="/signup">
+                      <Button className="bg-blue-600 text-white hover:bg-blue-700">
+                        Sign up
+                      </Button>
+                    </Link>
+                  </>
+                )}
               </div>
             </>
           ) : (
@@ -128,6 +153,9 @@ const Navbar = () => {
                     <Link to="/" className="text-lg font-medium">Home</Link>
                     <Link to="/spaces" className="text-lg font-medium">Spaces</Link>
                     <Link to="/about" className="text-lg font-medium">About</Link>
+                    {user?.isAdmin && (
+                      <Link to="/admin" className="text-lg font-medium text-blue-600">Admin Dashboard</Link>
+                    )}
                     <div className="pt-2">
                       <p className="text-sm text-gray-500 mb-2">Cities</p>
                       {["Pune", "Mumbai", "Bangalore", "Delhi", "Hyderabad"].map((city) => (
@@ -144,12 +172,20 @@ const Navbar = () => {
                       className="w-full"
                     />
                     <div className="space-y-2">
-                      <Link to="/login">
-                        <Button variant="outline" className="w-full">Log in</Button>
-                      </Link>
-                      <Link to="/signup">
-                        <Button className="w-full">Sign up</Button>
-                      </Link>
+                      {user ? (
+                        <Button onClick={() => logout()} variant="outline" className="w-full">
+                          Logout
+                        </Button>
+                      ) : (
+                        <>
+                          <Link to="/login">
+                            <Button variant="outline" className="w-full">Log in</Button>
+                          </Link>
+                          <Link to="/signup">
+                            <Button className="w-full">Sign up</Button>
+                          </Link>
+                        </>
+                      )}
                     </div>
                   </div>
                 </div>

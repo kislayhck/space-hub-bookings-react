@@ -1,10 +1,12 @@
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { supabase } from "@/integrations/supabase/client";
 import { Space } from '@/types';
 
 export function useSpaces() {
-  return useQuery({
+  const queryClient = useQueryClient();
+
+  const query = useQuery({
     queryKey: ['spaces'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -21,14 +23,14 @@ export function useSpaces() {
         id: item.id,
         name: item.name,
         location: {
-          address: (item.location as any).address || '',
-          city: (item.location as any).city || '',
-          area: (item.location as any).area || '',
+          address: (item.location as any)?.address || '',
+          city: (item.location as any)?.city || '',
+          area: (item.location as any)?.area || '',
         },
         description: item.description || '',
         price: {
-          daily: (item.price as any).daily || 0,
-          monthly: (item.price as any).monthly || 0,
+          daily: (item.price as any)?.daily || 0,
+          monthly: (item.price as any)?.monthly || 0,
         },
         rating: item.rating || 0,
         reviewCount: item.review_count || 0,
@@ -36,12 +38,24 @@ export function useSpaces() {
         amenities: item.amenities || [],
         capacity: item.capacity || 0,
         openingHours: {
-          weekdays: (item.opening_hours as any).weekdays || '',
-          weekends: (item.opening_hours as any).weekends || '',
+          weekdays: (item.opening_hours as any)?.weekdays || '',
+          weekends: (item.opening_hours as any)?.weekends || '',
         },
         featured: item.featured || false,
         availableSeats: item.available_seats || 0,
       })) as Space[];
-    }
+    },
+    // Retry twice if the fetch fails
+    retry: 2,
   });
+
+  // Function to invalidate the spaces query
+  const invalidateSpaces = () => {
+    queryClient.invalidateQueries({ queryKey: ['spaces'] });
+  };
+
+  return {
+    ...query,
+    invalidateSpaces,
+  };
 }

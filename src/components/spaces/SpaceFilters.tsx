@@ -28,7 +28,8 @@ export const SpaceFilters = ({
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>(filters.amenities);
 
   const handlePriceChange = (value: number[]) => {
-    const newRange: [number, number] = [value[0], value[1]];
+    // Ensure we always have exactly 2 values for the price range
+    const newRange: [number, number] = [value[0], value[1] || maxPrice];
     setPriceRange(newRange);
   };
 
@@ -52,7 +53,7 @@ export const SpaceFilters = ({
     onFilterChange({
       ...filters,
       area: selectedAreas,
-      priceRange,
+      priceRange: priceRange,
       amenities: selectedAmenities
     });
   };
@@ -61,7 +62,7 @@ export const SpaceFilters = ({
     const newFilters = {
       ...filters,
       area: [],
-      priceRange: [0, maxPrice],
+      priceRange: [0, maxPrice] as [number, number],
       amenities: []
     };
     
