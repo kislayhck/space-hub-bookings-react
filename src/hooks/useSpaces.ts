@@ -53,11 +53,14 @@ export function useSpaces() {
   // Add a createSpace mutation
   const createSpace = useMutation({
     mutationFn: async (spaceData: any) => {
-      const session = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session.data.session) {
+      if (sessionError || !sessionData.session) {
+        console.error('Authentication error:', sessionError);
         throw new Error('You must be logged in to create a space');
       }
+      
+      console.log('Creating space with user:', sessionData.session.user.id);
       
       const { data, error } = await supabase
         .from('spaces')
@@ -86,9 +89,10 @@ export function useSpaces() {
   // Mutation to update a space
   const updateSpace = useMutation({
     mutationFn: async ({ id, spaceData }: { id: string; spaceData: any }) => {
-      const session = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session.data.session) {
+      if (sessionError || !sessionData.session) {
+        console.error('Authentication error:', sessionError);
         throw new Error('You must be logged in to update a space');
       }
       
@@ -117,9 +121,10 @@ export function useSpaces() {
   // Mutation to delete a space
   const deleteSpace = useMutation({
     mutationFn: async (id: string) => {
-      const session = await supabase.auth.getSession();
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
       
-      if (!session.data.session) {
+      if (sessionError || !sessionData.session) {
+        console.error('Authentication error:', sessionError);
         throw new Error('You must be logged in to delete a space');
       }
       
