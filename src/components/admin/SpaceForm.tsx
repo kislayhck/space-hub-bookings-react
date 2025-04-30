@@ -19,6 +19,8 @@ import { OperatingHours } from "./space-form/OperatingHours";
 import { FeaturedToggle } from "./space-form/FeaturedToggle";
 import { FormActions } from "./space-form/FormActions";
 import { useSpaces } from "@/hooks/useSpaces";
+import { useAuth } from "@/contexts/AuthContext";
+import { Loader2 } from "lucide-react";
 
 interface SpaceFormProps {
   initialData?: Space;
@@ -32,6 +34,17 @@ export const SpaceForm = ({ initialData, onCancel }: SpaceFormProps) => {
   const [isUploading, setIsUploading] = useState(false);
   const { data: amenitiesList = [], isLoading: amenitiesLoading } = useAmenities();
   const { createSpace, updateSpace } = useSpaces();
+  const { user } = useAuth();
+
+  // Check if user is logged in
+  if (!user) {
+    return (
+      <div className="p-8 text-center">
+        <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
+        <p>Checking authentication...</p>
+      </div>
+    );
+  }
 
   // Prepare initial form values if editing
   const defaultValues: SpaceFormValues = {
@@ -101,6 +114,13 @@ export const SpaceForm = ({ initialData, onCancel }: SpaceFormProps) => {
   };
 
   const onSubmit = async (values: SpaceFormValues) => {
+    // Verify user is authenticated
+    const { data: session } = await supabase.auth.getSession();
+    if (!session.session) {
+      toast.error("You must be logged in to perform this action");
+      return;
+    }
+
     setIsLoading(true);
     
     try {
@@ -134,6 +154,8 @@ export const SpaceForm = ({ initialData, onCancel }: SpaceFormProps) => {
         },
         featured: values.featured,
       };
+
+      console.log("Submitting space data:", spaceData);
       
       if (initialData) {
         // Update existing space using the mutation

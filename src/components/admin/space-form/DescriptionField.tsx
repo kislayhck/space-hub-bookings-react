@@ -2,14 +2,17 @@
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { useFormContext } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export const DescriptionField = () => {
   const form = useFormContext();
-  const [characterCount, setCharacterCount] = useState(() => {
+  const [characterCount, setCharacterCount] = useState(0);
+
+  // Initialize character count on component mount
+  useEffect(() => {
     const currentValue = form.getValues("description") as string;
-    return currentValue ? currentValue.length : 0;
-  });
+    setCharacterCount(currentValue ? currentValue.length : 0);
+  }, [form]);
 
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setCharacterCount(e.target.value.length);

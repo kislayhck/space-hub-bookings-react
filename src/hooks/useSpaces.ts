@@ -53,7 +53,11 @@ export function useSpaces() {
   // Add a createSpace mutation
   const createSpace = useMutation({
     mutationFn: async (spaceData: any) => {
+      // Check user authentication status
       const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      
+      // Detailed logging for debugging
+      console.log('Session data:', sessionData);
       
       if (sessionError || !sessionData.session) {
         console.error('Authentication error:', sessionError);
@@ -61,6 +65,9 @@ export function useSpaces() {
       }
       
       console.log('Creating space with user:', sessionData.session.user.id);
+      
+      // Debug the space data being sent
+      console.log('Space data to insert:', spaceData);
       
       const { data, error } = await supabase
         .from('spaces')
