@@ -5,7 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Space } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
-import { toast } from "@/components/ui/sonner";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAmenities } from "@/hooks/useAmenities";
 import { spaceSchema, SpaceFormValues } from "./space-form/schema";
@@ -18,6 +18,7 @@ import { CapacityFields } from "./space-form/CapacityFields";
 import { OperatingHours } from "./space-form/OperatingHours";
 import { FeaturedToggle } from "./space-form/FeaturedToggle";
 import { FormActions } from "./space-form/FormActions";
+import { useSpaces } from "@/hooks/useSpaces";
 
 interface SpaceFormProps {
   initialData?: Space;
@@ -30,6 +31,7 @@ export const SpaceForm = ({ initialData, onCancel }: SpaceFormProps) => {
   const [uploadedImages, setUploadedImages] = useState<string[]>(initialData?.images || []);
   const [isUploading, setIsUploading] = useState(false);
   const { data: amenitiesList = [], isLoading: amenitiesLoading } = useAmenities();
+  const { createSpace, updateSpace } = useSpaces();
 
   // Prepare initial form values if editing
   const defaultValues: SpaceFormValues = {
@@ -133,36 +135,21 @@ export const SpaceForm = ({ initialData, onCancel }: SpaceFormProps) => {
         featured: values.featured,
       };
       
-      let response;
-      
       if (initialData) {
-        // Update existing space
-        response = await supabase
-          .from("spaces")
-          .update(spaceData)
-          .eq("id", initialData.id);
+        // Update existing space using the mutation
+        await updateSpace.mutateAsync({
+          id: initialData.id,
+          spaceData
+        });
       } else {
-        // Insert new space
-        response = await supabase
-          .from("spaces")
-          .insert([spaceData]);
+        // Create new space using the mutation
+        await createSpace.mutateAsync(spaceData);
       }
       
-      if (response.error) {
-        throw response.error;
-      }
-      
-      toast.success(
-        initialData ? "Space updated successfully" : "Space created successfully"
-      );
       onCancel(); // Return to the list view
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving space:", error);
-      toast.error(
-        initialData
-          ? "Failed to update space"
-          : "Failed to create space"
-      );
+      toast.error(error.message || (initialData ? "Failed to update space" : "Failed to create space"));
     } finally {
       setIsLoading(false);
     }
@@ -206,7 +193,7 @@ export const SpaceForm = ({ initialData, onCancel }: SpaceFormProps) => {
 
         {/* Form Actions */}
         <FormActions 
-          isLoading={isLoading}
+          isLoading={isLoading || createSpace.isPending || updateSpace.isPending}
           isUploading={isUploading}
           onCancel={onCancel}
           isEditing={!!initialData}

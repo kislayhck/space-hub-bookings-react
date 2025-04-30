@@ -50,9 +50,79 @@ export function useSpaces() {
     retry: 2,
   });
 
+  // Add a createSpace mutation
+  const createSpace = useMutation({
+    mutationFn: async (spaceData: any) => {
+      const session = await supabase.auth.getSession();
+      
+      if (!session.data.session) {
+        throw new Error('You must be logged in to create a space');
+      }
+      
+      const { data, error } = await supabase
+        .from('spaces')
+        .insert([spaceData])
+        .select()
+        .single();
+        
+      if (error) {
+        console.error('Error creating space:', error);
+        throw error;
+      }
+      
+      return data;
+    },
+    onSuccess: () => {
+      // Invalidate spaces query to refetch the updated list
+      queryClient.invalidateQueries({ queryKey: ['spaces'] });
+      toast.success("Space created successfully");
+    },
+    onError: (error) => {
+      console.error('Error creating space:', error);
+      toast.error(`Failed to create space: ${error.message}`);
+    }
+  });
+
+  // Mutation to update a space
+  const updateSpace = useMutation({
+    mutationFn: async ({ id, spaceData }: { id: string; spaceData: any }) => {
+      const session = await supabase.auth.getSession();
+      
+      if (!session.data.session) {
+        throw new Error('You must be logged in to update a space');
+      }
+      
+      const { data, error } = await supabase
+        .from('spaces')
+        .update(spaceData)
+        .eq('id', id)
+        .select()
+        .single();
+        
+      if (error) throw error;
+      
+      return data;
+    },
+    onSuccess: () => {
+      // Invalidate spaces query to refetch the updated list
+      queryClient.invalidateQueries({ queryKey: ['spaces'] });
+      toast.success("Space updated successfully");
+    },
+    onError: (error) => {
+      console.error('Error updating space:', error);
+      toast.error(`Failed to update space: ${error.message}`);
+    }
+  });
+
   // Mutation to delete a space
   const deleteSpace = useMutation({
     mutationFn: async (id: string) => {
+      const session = await supabase.auth.getSession();
+      
+      if (!session.data.session) {
+        throw new Error('You must be logged in to delete a space');
+      }
+      
       const { error } = await supabase
         .from('spaces')
         .delete()
@@ -68,7 +138,7 @@ export function useSpaces() {
     },
     onError: (error) => {
       console.error('Error deleting space:', error);
-      toast.error("Failed to delete space");
+      toast.error(`Failed to delete space: ${error.message}`);
     }
   });
 
@@ -79,6 +149,8 @@ export function useSpaces() {
 
   return {
     ...query,
+    createSpace,
+    updateSpace,
     deleteSpace,
     invalidateSpaces,
   };
