@@ -24,10 +24,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = localStorage.getItem('spacehub_user');
     if (storedUser) {
       try {
+        const parsedUser = JSON.parse(storedUser);
         setAuthState({
-          user: JSON.parse(storedUser),
+          user: parsedUser,
           loading: false
         });
+        
+        // Set up Supabase auth session when stored user exists
+        const setupAuthSession = async () => {
+          try {
+            // Since we're using a mock auth system, we need to manually sign in to Supabase
+            // This is just for demo purposes - in a real app this would use proper auth
+            const { error } = await supabase.auth.signInWithPassword({
+              email: parsedUser.email,
+              password: ADMIN_PASSWORD,
+            });
+            
+            if (error) {
+              console.error('Error setting up Supabase session:', error);
+            } else {
+              console.log('Supabase session established for user:', parsedUser.email);
+            }
+          } catch (e) {
+            console.error('Failed to set up Supabase session:', e);
+          }
+        };
+        
+        setupAuthSession();
       } catch (e) {
         console.error('Failed to parse stored user:', e);
         localStorage.removeItem('spacehub_user');
@@ -42,15 +65,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Simple authentication for demo purposes
     // In a real app, this would call an API endpoint
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
-      const user: User = { email, isAdmin: true };
-      localStorage.setItem('spacehub_user', JSON.stringify(user));
-      setAuthState({ user, loading: false });
-      return true;
+      try {
+        // Authenticate with Supabase as well
+        const { data, error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+        
+        if (error) {
+          console.error('Supabase auth error:', error);
+          toast.error(`Authentication error: ${error.message}`);
+          return false;
+        }
+        
+        console.log('Supabase auth successful:', data);
+        
+        const user: User = { email, isAdmin: true };
+        localStorage.setItem('spacehub_user', JSON.stringify(user));
+        setAuthState({ user, loading: false });
+        return true;
+      } catch (e) {
+        console.error('Login error:', e);
+        return false;
+      }
     }
     return false;
   };
 
-  const logout = () => {
+  const logout = async () => {
+    try {
+      // Sign out from Supabase
+      await supabase.auth.signOut();
+    } catch (e) {
+      console.error('Error signing out from Supabase:', e);
+    }
+    
     localStorage.removeItem('spacehub_user');
     setAuthState({ user: null, loading: false });
   };

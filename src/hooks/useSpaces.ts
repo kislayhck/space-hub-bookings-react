@@ -53,40 +53,48 @@ export function useSpaces() {
   // Add a createSpace mutation
   const createSpace = useMutation({
     mutationFn: async (spaceData: any) => {
-      // Check user authentication status
-      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
-      
-      // Detailed logging for debugging
-      console.log('Session data:', sessionData);
-      
-      if (sessionError || !sessionData.session) {
-        console.error('Authentication error:', sessionError);
-        throw new Error('You must be logged in to create a space');
-      }
-      
-      console.log('Creating space with user:', sessionData.session.user.id);
-      console.log('Space data to insert:', spaceData);
-
-      // Explicitly use service_role key for this operation to bypass RLS
-      const { data, error } = await supabase
-        .from('spaces')
-        .insert([spaceData])
-        .select()
-        .single();
+      try {
+        // Check user authentication status
+        const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
         
-      if (error) {
-        console.error('Error creating space:', error);
+        // Detailed logging for debugging
+        console.log('Session data:', sessionData);
+        
+        if (sessionError || !sessionData.session) {
+          console.error('Authentication error:', sessionError);
+          throw new Error('You must be logged in to create a space');
+        }
+        
+        console.log('Creating space with user:', sessionData.session.user.id);
+        console.log('Space data to insert:', spaceData);
+
+        // Important: Don't add user_id to the data as it's causing the RLS policy to fail
+        // The RLS policies should be based on something other than user_id since this is admin functionality
+        
+        const { data, error } = await supabase
+          .from('spaces')
+          .insert([spaceData])
+          .select()
+          .single();
+          
+        if (error) {
+          console.error('Error creating space:', error);
+          throw error;
+        }
+        
+        console.log('Successfully created space:', data);
+        return data;
+      } catch (error: any) {
+        console.error('Error in createSpace mutation:', error);
         throw error;
       }
-      
-      return data;
     },
     onSuccess: () => {
       // Invalidate spaces query to refetch the updated list
       queryClient.invalidateQueries({ queryKey: ['spaces'] });
       toast.success("Space created successfully");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error creating space:', error);
       toast.error(`Failed to create space: ${error.message}`);
     }
@@ -118,7 +126,7 @@ export function useSpaces() {
       queryClient.invalidateQueries({ queryKey: ['spaces'] });
       toast.success("Space updated successfully");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error updating space:', error);
       toast.error(`Failed to update space: ${error.message}`);
     }
@@ -147,7 +155,7 @@ export function useSpaces() {
       queryClient.invalidateQueries({ queryKey: ['spaces'] });
       toast.success("Space deleted successfully");
     },
-    onError: (error) => {
+    onError: (error: any) => {
       console.error('Error deleting space:', error);
       toast.error(`Failed to delete space: ${error.message}`);
     }

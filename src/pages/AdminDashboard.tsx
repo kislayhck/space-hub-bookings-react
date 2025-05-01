@@ -12,6 +12,8 @@ import { SpaceForm } from "@/components/admin/SpaceForm";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { PlusCircle } from "lucide-react";
+import { InitializeAmenities } from "@/components/admin/InitializeAmenities";
+import { useAmenities } from "@/hooks/useAmenities";
 
 const AdminDashboard = () => {
   const { user, logout } = useAuth();
@@ -20,6 +22,7 @@ const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState("list");
   const [selectedSpace, setSelectedSpace] = useState<Space | null>(null);
   const { data: spaces, isLoading, error } = useSpaces();
+  const { data: amenities = [] } = useAmenities();
 
   const handleLogout = () => {
     logout();
@@ -74,6 +77,17 @@ const AdminDashboard = () => {
           </div>
         </div>
 
+        {/* Admin Setup Section */}
+        {amenities.length === 0 && (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <h2 className="text-lg font-medium text-blue-800 mb-2">Initial Setup Required</h2>
+            <p className="text-blue-700 mb-4">
+              Before creating spaces, you need to set up amenities that spaces can offer.
+            </p>
+            <InitializeAmenities />
+          </div>
+        )}
+
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="mb-4">
             <TabsTrigger value="list">Spaces List</TabsTrigger>
@@ -83,7 +97,7 @@ const AdminDashboard = () => {
 
           <TabsContent value="list">
             <div className="flex justify-end mb-4">
-              <Button onClick={handleAddNewSpace}>
+              <Button onClick={handleAddNewSpace} disabled={amenities.length === 0}>
                 <PlusCircle className="mr-2 h-5 w-5" /> Add New Space
               </Button>
             </div>

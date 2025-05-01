@@ -4,6 +4,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useFormContext } from "react-hook-form";
 import { Amenity } from "@/hooks/useAmenities";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface AmenitiesListProps {
   amenitiesList: Amenity[];
@@ -17,10 +18,23 @@ export const AmenitiesList = ({ amenitiesList, isLoading }: AmenitiesListProps) 
     <div className="col-span-full space-y-2">
       <FormLabel>Amenities</FormLabel>
       <FormDescription>Select all the amenities available at this space.</FormDescription>
+      
+      {!isLoading && amenitiesList.length === 0 && (
+        <Alert className="bg-amber-50 border-amber-200 text-amber-800 mb-4">
+          <AlertDescription>
+            No amenities found in the database. Please add amenities first.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mt-2">
         {isLoading ? (
           <div className="col-span-full flex justify-center py-4">
             <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          </div>
+        ) : amenitiesList.length === 0 ? (
+          <div className="col-span-full py-2 text-gray-500">
+            <p>No amenities available to select.</p>
           </div>
         ) : (
           amenitiesList.map((amenity) => (
