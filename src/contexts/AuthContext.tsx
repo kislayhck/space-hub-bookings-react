@@ -35,17 +35,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Set up Supabase auth session when stored user exists
         const setupAuthSession = async () => {
           try {
+            console.log('Setting up Supabase session for stored user');
             // Since we're using a mock auth system, we need to manually sign in to Supabase
-            // This is just for demo purposes - in a real app this would use proper auth
-            const { error } = await supabase.auth.signInWithPassword({
-              email: parsedUser.email,
+            const { data, error } = await supabase.auth.signInWithPassword({
+              email: ADMIN_EMAIL,
               password: ADMIN_PASSWORD,
             });
             
             if (error) {
               console.error('Error setting up Supabase session:', error);
+              // Don't invalidate the user session if Supabase auth fails
+              // Just log the error for debugging
             } else {
-              console.log('Supabase session established for user:', parsedUser.email);
+              console.log('Supabase session established successfully:', data.session);
             }
           } catch (e) {
             console.error('Failed to set up Supabase session:', e);
@@ -68,6 +70,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // In a real app, this would call an API endpoint
     if (email === ADMIN_EMAIL && password === ADMIN_PASSWORD) {
       try {
+        console.log('Attempting Supabase authentication');
         // Authenticate with Supabase as well
         const { data, error } = await supabase.auth.signInWithPassword({
           email,
@@ -76,8 +79,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         
         if (error) {
           console.error('Supabase auth error:', error);
-          toast.error(`Authentication error: ${error.message}`);
-          return false;
+          
+          // Special case for demo: If Supabase auth fails but credentials match our hardcoded ones,
+          // we'll still allow login but with a warning
+          console.log('Using fallback authentication for demo');
+          toast.warning("Backend authentication failed, using demo mode");
+          
+          const user: User = { email, isAdmin: true };
+          localStorage.setItem('spacehub_user', JSON.stringify(user));
+          setAuthState({ user, loading: false });
+          return true;
         }
         
         console.log('Supabase auth successful:', data);
@@ -98,12 +109,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       // Sign out from Supabase
       await supabase.auth.signOut();
+      console.log('Signed out from Supabase');
     } catch (e) {
       console.error('Error signing out from Supabase:', e);
     }
     
     localStorage.removeItem('spacehub_user');
     setAuthState({ user: null, loading: false });
+    console.log('User logged out');
   };
 
   return (

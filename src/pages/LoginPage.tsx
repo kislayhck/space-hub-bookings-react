@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/layout/Navbar";
+import { Loader2 } from "lucide-react";
 
 const LoginPage = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("admin@spacehub.com");
+  const [password, setPassword] = useState("admin123");
   const [isLoading, setIsLoading] = useState(false);
   const { login, user } = useAuth();
   const navigate = useNavigate();
@@ -27,19 +28,23 @@ const LoginPage = () => {
     setIsLoading(true);
 
     try {
+      console.log(`Attempting login with email: ${email}`);
       const success = await login(email, password);
+      
       if (success) {
         toast({
           title: "Login successful",
           description: "Welcome to the admin dashboard",
         });
         navigate("/admin");
+        console.log("Login successful, navigating to admin dashboard");
       } else {
         toast({
           title: "Login failed",
           description: "Invalid email or password",
           variant: "destructive",
         });
+        console.log("Login failed: invalid credentials");
       }
     } catch (error) {
       toast({
@@ -94,7 +99,14 @@ const LoginPage = () => {
             </CardContent>
             <CardFooter>
               <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? "Logging in..." : "Login"}
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Logging in...
+                  </>
+                ) : (
+                  "Login"
+                )}
               </Button>
             </CardFooter>
           </form>
