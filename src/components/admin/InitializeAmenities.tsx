@@ -24,11 +24,27 @@ export function InitializeAmenities() {
   const handleInitializeAmenities = async () => {
     setIsLoading(true);
     try {
+      // Check authentication status first
+      const { data: session } = await supabase.auth.getSession();
+      if (!session.session) {
+        toast.error("You must be logged in to initialize amenities");
+        setIsLoading(false);
+        return;
+      }
+      
+      console.log("Auth session found:", session.session);
+      
       // First check if amenities already exist
-      const { data: existingAmenities } = await supabase
+      const { data: existingAmenities, error: fetchError } = await supabase
         .from('amenities')
         .select('id')
         .limit(1);
+      
+      if (fetchError) {
+        console.error('Error checking existing amenities:', fetchError);
+        toast.error(`Failed to check existing amenities: ${fetchError.message}`);
+        return;
+      }
       
       if (existingAmenities && existingAmenities.length > 0) {
         toast.info("Amenities are already set up");
@@ -36,6 +52,8 @@ export function InitializeAmenities() {
         return;
       }
 
+      console.log("No existing amenities found, creating default set");
+      
       // Add default amenities
       const { error } = await supabase
         .from('amenities')
@@ -48,6 +66,12 @@ export function InitializeAmenities() {
       }
       
       toast.success("Default amenities have been created successfully");
+      
+      // Refresh the page to show the newly created amenities
+      setTimeout(() => {
+        window.location.reload();
+      }, 1500);
+      
     } catch (error: any) {
       console.error('Error:', error);
       toast.error(`An error occurred: ${error.message}`);

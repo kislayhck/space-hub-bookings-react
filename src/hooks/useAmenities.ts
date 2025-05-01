@@ -14,6 +14,11 @@ export function useAmenities() {
     queryKey: ['amenities'],
     queryFn: async () => {
       console.log('Fetching amenities...');
+      
+      // Check authentication status
+      const { data: sessionData } = await supabase.auth.getSession();
+      console.log('Current auth session:', sessionData.session ? 'Authenticated' : 'Not authenticated');
+      
       const { data, error } = await supabase
         .from('amenities')
         .select('*');
